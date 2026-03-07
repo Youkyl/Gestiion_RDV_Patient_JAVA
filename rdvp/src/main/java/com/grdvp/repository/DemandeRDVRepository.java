@@ -2,7 +2,6 @@ package com.grdvp.repository;
 
 import com.grdvp.config.DatabaseConnection;
 import com.grdvp.entity.DemandeRDV;
-import com.grdvp.entity.Patient;
 import com.grdvp.entity.Specialite;
 import com.grdvp.entity.Statut;
 import com.grdvp.factory.ObjectFactory;
