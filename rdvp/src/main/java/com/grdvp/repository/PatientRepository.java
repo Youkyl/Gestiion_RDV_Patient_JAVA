@@ -2,7 +2,8 @@ package com.grdvp.repository;
 
 import com.grdvp.config.DatabaseConnection;
 import com.grdvp.entity.Patient;
-import com.grdvp.repository.interfaces.PatientRepository;
+import com.grdvp.factory.ObjectFactory;
+import com.grdvp.repository.interfaces.PatientRepositoryImpl;
 
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -15,15 +16,15 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 
-public class PatientRepositoryImpl implements PatientRepository {
+public class PatientRepository implements PatientRepositoryImpl {
 
     private static final Gson GSON = new Gson();
     private static final Type LIST_STRING = new TypeToken<List<String>>() {}.getType();
 
-    private static PatientRepositoryImpl instance;
+    private static PatientRepository instance;
     private Connection db;
 
-    private PatientRepositoryImpl() {
+    private PatientRepository() {
         try {
             this.db = DatabaseConnection.getConnection();
         } catch (SQLException e) {
@@ -31,9 +32,9 @@ public class PatientRepositoryImpl implements PatientRepository {
         }
     }
 
-    public static PatientRepositoryImpl getInstance() {
+    public static PatientRepository getInstance() {
         if (instance == null) {
-            instance = new PatientRepositoryImpl();
+            instance = new PatientRepository();
         }
         return instance;
     }
@@ -155,6 +156,7 @@ public class PatientRepositoryImpl implements PatientRepository {
         return null;
     }
 
+
     public int getNextPatientCodeNumber() {
         String sql = "SELECT MAX(CAST(SUBSTRING(patient_code, 5) AS INTEGER)) AS max_num FROM patient WHERE patient_code LIKE 'PAT-%'";
 
@@ -169,8 +171,9 @@ public class PatientRepositoryImpl implements PatientRepository {
         return 1;
     }
 
+
     private Patient mapRowToPatient(ResultSet rs) throws SQLException {
-        Patient p = new Patient();
+        Patient p = ObjectFactory.createPatient();
         p.setId(rs.getInt("id"));
         p.setPatientCode(rs.getString("patient_code"));
         p.setLastname(rs.getString("lastname"));

@@ -1,7 +1,9 @@
 package com.grdvp.service;
 
 import com.grdvp.entity.Patient;
-import com.grdvp.repository.PatientRepositoryImpl;
+import com.grdvp.factory.ObjectFactory;
+import com.grdvp.repository.PatientRepository;
+import com.grdvp.repository.interfaces.PatientRepositoryImpl;
 import com.grdvp.service.interfaces.PatientServiceImpl;
 
 import java.time.LocalDate;
@@ -15,7 +17,7 @@ public class PatientService implements PatientServiceImpl {
     private final PatientRepositoryImpl patientRepo;
 
     private PatientService() {
-        this.patientRepo = PatientRepositoryImpl.getInstance();
+        this.patientRepo = PatientRepository.getInstance();
     }
 
     public static PatientService getInstance() {
@@ -27,7 +29,7 @@ public class PatientService implements PatientServiceImpl {
 
     public Patient createPatientCode(String lastname, String firstname, String phone, String email, String password) 
     {
-        Patient patient = new Patient();
+        Patient patient = ObjectFactory.createPatient();
         patient.setLastname(lastname);
         patient.setFirstname(firstname);
         patient.setPhone(phone);
@@ -37,7 +39,7 @@ public class PatientService implements PatientServiceImpl {
         return patient;
     }
 
-    @Override
+    
     public void addPatient(Patient patient) {
         if (patient.getPatientCode() == null || patient.getPatientCode().isEmpty()) {
             patient.setPatientCode(generatePatientCode());
@@ -48,35 +50,35 @@ public class PatientService implements PatientServiceImpl {
         patientRepo.insertPatient(patient);
     }
 
-    @Override
+   
     public void addPersonalInformation(Patient patient) {
         patientRepo.updatePersonalInformation(patient);
     }
 
-    @Override
+    
     public void addMedicalHistory(Patient patient, List<String> medicalHistory) {
         patientRepo.updateMedicalHistory(patient, medicalHistory);
     }
 
-    @Override
+   
     public String generatePatientCode() {
         int nextNumber = patientRepo.getNextPatientCodeNumber(); 
         return String.format("PAT-%04d", nextNumber);
     }
 
-    @Override
+   
     public Patient connexion(String email, String password) {
         return patientRepo.findByEmailAndPassword(email, password);
     }
 
-    @Override
+    
     public void completePatientInfo(Patient patient, LocalDate dateNaissance, String adresse) {
         patient.setBirthday(dateNaissance);
         patient.setAddress(adresse);
         patientRepo.updatePersonalInformation(patient);
     }
 
-    @Override
+   
     public void addAntecedent(Patient patient, String antecedent) {
         List<String> history = patient.getMedicalHistory() != null ? new ArrayList<>(patient.getMedicalHistory()) : new ArrayList<>();
         history.add(antecedent);
@@ -84,7 +86,7 @@ public class PatientService implements PatientServiceImpl {
         patientRepo.updateMedicalHistory(patient, history);
     }
 
-    @Override
+    
     public Patient getConnectedPatientInfo(Integer patientId) {
         return patientRepo.findById(patientId);
     }

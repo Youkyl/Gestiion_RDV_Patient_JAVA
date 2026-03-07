@@ -4,7 +4,7 @@ import com.grdvp.entity.DemandeRDV;
 import com.grdvp.entity.Statut;
 import java.util.List;
 
-public interface DemandeRDVRepository {
+public interface DemandeRDVRepositoryImpl {
 
     void insertDemande(DemandeRDV demande);
 

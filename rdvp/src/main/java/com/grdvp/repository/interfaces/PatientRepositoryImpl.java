@@ -3,7 +3,7 @@ package com.grdvp.repository.interfaces;
 import com.grdvp.entity.Patient;
 import java.util.List;
 
-public interface PatientRepository {
+public interface PatientRepositoryImpl {
 
     void insertPatient(Patient patient);
 

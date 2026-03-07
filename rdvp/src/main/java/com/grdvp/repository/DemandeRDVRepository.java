@@ -5,19 +5,20 @@ import com.grdvp.entity.DemandeRDV;
 import com.grdvp.entity.Patient;
 import com.grdvp.entity.Specialite;
 import com.grdvp.entity.Statut;
-import com.grdvp.repository.interfaces.DemandeRDVRepository;
+import com.grdvp.factory.ObjectFactory;
+import com.grdvp.repository.interfaces.DemandeRDVRepositoryImpl;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class DemandeRDVRepositoryImpl implements DemandeRDVRepository {
+public class DemandeRDVRepository implements DemandeRDVRepositoryImpl {
 
-    private static DemandeRDVRepositoryImpl instance;
+    private static DemandeRDVRepository instance;
     private Connection db;
 
-    private DemandeRDVRepositoryImpl() {
+    private DemandeRDVRepository() {
         try {
             this.db = DatabaseConnection.getConnection();
         } catch (SQLException e) {
@@ -25,9 +26,9 @@ public class DemandeRDVRepositoryImpl implements DemandeRDVRepository {
         }
     }
 
-    public static DemandeRDVRepositoryImpl getInstance() {
+    public static DemandeRDVRepository getInstance() {
         if (instance == null) {
-            instance = new DemandeRDVRepositoryImpl();
+            instance = new DemandeRDVRepository();
         }
         return instance;
     }
@@ -142,6 +143,7 @@ public class DemandeRDVRepositoryImpl implements DemandeRDVRepository {
         List<DemandeRDV> list = new ArrayList<>();
         try (PreparedStatement ps = db.prepareStatement(sql)) {
             if (patientId != null) ps.setInt(1, patientId);
+
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(mapRowToDemande(rs));
         } catch (SQLException e) {
@@ -149,16 +151,17 @@ public class DemandeRDVRepositoryImpl implements DemandeRDVRepository {
         }
         return list;
     }
+    
 
     private DemandeRDV mapRowToDemande(ResultSet rs) throws SQLException {
-        DemandeRDV d = new DemandeRDV();
+        DemandeRDV d = ObjectFactory.createDemandeRDV();
         d.setId(rs.getInt("id"));
         d.setDescription(rs.getString("description"));
         Timestamp created = rs.getTimestamp("created_at");
         d.setCreatedAt(created != null ? created.toLocalDateTime() : null);
 
         if (d.getPatient() == null) {
-            d.setPatient(new Patient());
+            d.setPatient(ObjectFactory.createPatient());
         }
 
         d.getPatient().setId(rs.getInt("patient_id"));

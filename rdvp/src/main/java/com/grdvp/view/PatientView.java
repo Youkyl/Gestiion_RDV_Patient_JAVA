@@ -79,7 +79,7 @@ public class PatientView {
                     // System.out.println("Veillez entrer votre date de naissance: ");
                     // LocalDate birthday = LocalDate.parse(scanner.nextLine());
                     
-                    // Patient patient = new Patient(
+                    // Patient patient = ObjectFactory.createPatient(
                     //     nom, 
                     //     prenom, 
                     //     number, 

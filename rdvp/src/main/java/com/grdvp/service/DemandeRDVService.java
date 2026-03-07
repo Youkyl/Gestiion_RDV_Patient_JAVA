@@ -4,7 +4,9 @@ import com.grdvp.entity.DemandeRDV;
 import com.grdvp.entity.Patient;
 import com.grdvp.entity.Specialite;
 import com.grdvp.entity.Statut;
-import com.grdvp.repository.DemandeRDVRepositoryImpl;
+import com.grdvp.factory.ObjectFactory;
+import com.grdvp.repository.DemandeRDVRepository;
+import com.grdvp.repository.interfaces.DemandeRDVRepositoryImpl;
 import com.grdvp.service.interfaces.DemandeRDVServiceImpl;
 
 import java.time.LocalDateTime;
@@ -16,7 +18,7 @@ public class DemandeRDVService implements DemandeRDVServiceImpl {
     private final DemandeRDVRepositoryImpl demandeRepo;
 
     private DemandeRDVService() {
-        this.demandeRepo = DemandeRDVRepositoryImpl.getInstance();
+        this.demandeRepo = DemandeRDVRepository.getInstance();
     }
 
     public static DemandeRDVService getInstance() {
@@ -27,7 +29,7 @@ public class DemandeRDVService implements DemandeRDVServiceImpl {
     }
 
     public DemandeRDV createDemandeRDV(Patient patient, Specialite specialite, String description) {
-        DemandeRDV d = new DemandeRDV();
+        DemandeRDV d = ObjectFactory.createDemandeRDV();
         d.setPatient(patient);
         d.getPatient().setId(patient.getId());
         d.setSpecialite(specialite);
@@ -37,29 +39,29 @@ public class DemandeRDVService implements DemandeRDVServiceImpl {
         return d;
     }
 
-    @Override
+   
     public void addDemand(DemandeRDV demande) {
         if (demande.getCreatedAt() == null) demande.setCreatedAt(LocalDateTime.now());
         if (demande.getStatut() == null) demande.setStatut(Statut.EN_COURS);
         demandeRepo.insertDemande(demande);
     }
 
-    @Override
+    
     public List<DemandeRDV> searchDemand(Patient patient) {
         return demandeRepo.selectDemande(patient.getId());
     }
 
-    @Override
+    
     public List<DemandeRDV> searchApointment(int patientId) {
         return demandeRepo.selectAppointment(patientId);
     }
 
-    @Override
+    
     public List<DemandeRDV> filterDemandByStatus(String statut, int patientId) {
         return demandeRepo.selectDemandeByStatut(statut, patientId); 
     }
     
-    @Override
+    
     public void changeDemandeStatut(DemandeRDV demande, Statut statut) {
         if (demande != null && demande.getId() != null) {
             demandeRepo.updateStatut(demande.getId(), statut);
@@ -67,12 +69,12 @@ public class DemandeRDVService implements DemandeRDVServiceImpl {
         }
     }
 
-    @Override
+    
     public List<DemandeRDV> getAllDemande() {
         return demandeRepo.findAll();
     }
 
-    @Override
+    
     public DemandeRDV serchDemandeById(int demandeId) {
         return demandeRepo.findById(demandeId);
     }
