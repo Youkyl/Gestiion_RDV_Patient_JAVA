@@ -2,13 +2,45 @@ package com.grdvp.entity;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "demande_rdv")
 public class DemandeRDV {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+
+    @Column(nullable = false)
     private String description;
+
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
-    //private Integer patientId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private Specialite specialite;
+
+    @Enumerated(EnumType.STRING)
     private Statut statut;
 
     public DemandeRDV() {}
@@ -39,8 +71,7 @@ public class DemandeRDV {
     }
 
     public Integer getPatientId() {
-        int patientId = patient.getId();
-        return patientId;
+        return patient != null ? patient.getId() : null;
     }
 
     public String getDescription() {
