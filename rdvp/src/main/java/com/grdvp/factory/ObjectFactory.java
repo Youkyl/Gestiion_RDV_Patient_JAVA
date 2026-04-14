@@ -1,5 +1,6 @@
 package com.grdvp.factory;
 
+import com.grdvp.config.JPAUtil;
 import com.grdvp.entity.Patient;
 import com.grdvp.entity.DemandeRDV;
 import com.grdvp.entity.Specialite;
@@ -15,9 +16,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.EntityManager;
+
 
 public class ObjectFactory {
 
+    private static EntityManager entityManager;
     
     private static PatientRepository patientRepo;
     private static DemandeRDVRepository demandeRepo;
@@ -27,6 +31,7 @@ public class ObjectFactory {
     private static DemandeRDVService demandeService;
 
     static {
+        entityManager = JPAUtil.createEntityManager();
         patientRepo = PatientRepository.getInstance();
         demandeRepo = DemandeRDVRepository.getInstance();
         patientService = PatientService.getInstance();
@@ -189,6 +194,10 @@ public class ObjectFactory {
      */
     public static DemandeRDVService getDemandeRDVService() {
         return demandeService;
+    }
+
+    public static EntityManager getEntityManager() {
+        return entityManager;
     }
 
 }
