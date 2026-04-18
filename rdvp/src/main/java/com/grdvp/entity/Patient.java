@@ -41,7 +41,7 @@ public class Patient {
     private String phone;  //Obligatoire lors de la creation d'un nouveau patient
 
     @Column(name = "medical_history", columnDefinition = "jsonb")
-    @Convert
+    @Convert(converter = JsonbListConverter.class)
     private List<String> medicalHistory; //Facultatif lors de la creation d'un nouveau patient
 
     @Column(nullable = false)
