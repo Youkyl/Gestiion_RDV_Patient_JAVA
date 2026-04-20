@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Objects;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -41,7 +42,7 @@ public class Patient {
     private String phone;  //Obligatoire lors de la creation d'un nouveau patient
 
     @Column(name = "medical_history", columnDefinition = "jsonb")
-    @Convert(converter = JsonbListConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
     private List<String> medicalHistory; //Facultatif lors de la creation d'un nouveau patient
 
     @Column(nullable = false)
@@ -50,7 +51,7 @@ public class Patient {
     @Column(nullable = false)
     private String password; //Obligatoire lors de la creation d'un nouveau patient
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private LocalDate birthday; //Obligatoire lors de la creation d'un nouveau patient
 
     @Column(name = "created_at", updatable = false)

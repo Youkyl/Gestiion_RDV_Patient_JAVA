@@ -3,6 +3,8 @@ package com.grdvp.entity;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,11 +38,14 @@ public class DemandeRDV {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "specialite", nullable = false, columnDefinition = "specialite_enum")
     private Specialite specialite;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "statut", columnDefinition = "statut_enum", nullable = false)
     private Statut statut;
 
     public DemandeRDV() {}
