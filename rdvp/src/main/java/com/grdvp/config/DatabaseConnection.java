@@ -18,7 +18,7 @@ public class DatabaseConnection {
                 .getResourceAsStream("config.properties")) {
             
             if (input == null) {
-                System.err.println("❌ Fichier config.properties introuvable !");
+                // System.err.println("❌ Fichier config.properties introuvable !");
             } else {
                 properties.load(input);
             }
@@ -35,7 +35,7 @@ public class DatabaseConnection {
         try {
             Class.forName("org.postgresql.Driver");
             Connection connection = DriverManager.getConnection(url, user, password);
-            System.out.println("✅ Connexion réussie à PostgreSQL !");
+            // System.out.println("✅ Connexion réussie à PostgreSQL !");
             return connection;
         } catch (ClassNotFoundException e) {
             throw new SQLException("Driver PostgreSQL non trouvé", e);
@@ -46,7 +46,7 @@ public class DatabaseConnection {
         if (connection != null) {
             try {
                 connection.close();
-                System.out.println("🔒 Connexion fermée.");
+                // System.out.println("🔒 Connexion fermée.");
             } catch (SQLException e) {
                 e.printStackTrace();
             }

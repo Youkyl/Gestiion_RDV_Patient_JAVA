@@ -2,10 +2,15 @@ package com.grdvp.repository;
 
 import com.grdvp.config.DatabaseConnection;
 import com.grdvp.entity.DemandeRDV;
+import com.grdvp.entity.Patient;
 import com.grdvp.entity.Specialite;
 import com.grdvp.entity.Statut;
 import com.grdvp.factory.ObjectFactory;
 import com.grdvp.repository.interfaces.DemandeRDVRepositoryImpl;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
+import jakarta.persistence.TypedQuery;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -36,62 +41,79 @@ public class DemandeRDVRepository implements DemandeRDVRepositoryImpl {
     public void insertDemande(DemandeRDV demande) {
         Objects.requireNonNull(demande, "Patient cannot be null");
 
-        String sql = "INSERT INTO demande_rdv (description, patient_id, specialite, statut) VALUES (?, ?, ?::specialite_enum, ?::statut_enum) RETURNING id, created_at";
+        EntityManager entityManager = ObjectFactory.getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
 
-        try (PreparedStatement ps = db.prepareStatement(sql)) {
+        try {
+            transaction.begin();
 
-            ps.setString(1, demande.getDescription());
-
-            //int patientId = demande.getPatient().getId();
-
-            ps.setInt(2, demande.getPatient().getId());
-            
-            ps.setString(3, demande.getSpecialite().name());
-            
-            ps.setString(4, demande.getStatut() != null ? demande.getStatut().name() : Statut.EN_COURS.name());
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                demande.setId(rs.getInt("id"));
-                Timestamp created = rs.getTimestamp("created_at");
-                demande.setCreatedAt(created != null ? created.toLocalDateTime() : null);
+            if (demande.getPatient() == null || demande.getPatient().getId() == null) {
+                throw new IllegalArgumentException("Patient must be attached to the demande with a valid id");
             }
-        } catch (SQLException e) {
+
+            demande.setStatut(demande.getStatut() != null ? demande.getStatut() : Statut.EN_COURS);
+            demande.setPatient(entityManager.getReference(Patient.class, demande.getPatient().getId()));
+
+            entityManager.persist(demande);
+            entityManager.flush();
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
             throw new RuntimeException("Error inserting demande", e);
         }
     }
 
     
     public List<DemandeRDV> selectDemande(int patientId) {
-        return findDemandesByCondition("WHERE patient_id = ?", patientId);
+        return findDemandesByCondition("WHERE d.patient.id = :patientId", patientId);
     }
 
     
     public List<DemandeRDV> selectDemandeByStatut(String statut, int patientId) {
 
+        EntityManager entityManager = ObjectFactory.getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
         String sql = (patientId == 0)
-            ? "SELECT id, description, created_at, patient_id, specialite, statut FROM demande_rdv WHERE statut = ?::statut_enum ORDER BY created_at DESC"
-            : "SELECT id, description, created_at, patient_id, specialite, statut FROM demande_rdv WHERE statut = ?::statut_enum AND patient_id = ? ORDER BY created_at DESC";
+            ? "SELECT d FROM DemandeRDV d WHERE d.statut = :statut ORDER BY createdAt DESC"
+            : "SELECT d FROM DemandeRDV d WHERE d.statut = :statut AND d.patient.id = :patientId ORDER BY createdAt DESC";
 
-        List<DemandeRDV> list = new ArrayList<>();
+        TypedQuery<DemandeRDV> list;
 
-        try (PreparedStatement ps = db.prepareStatement(sql)) {
+        try {
+            transaction.begin();
 
-            ps.setString(1, statut);
+            list = entityManager.createQuery(sql, DemandeRDV.class);
+            list.setParameter("statut", Statut.valueOf(statut));
+            
 
             if (patientId != 0) {
-                ps.setInt(2, patientId);
+                list.setParameter("patientId", patientId);
+            }            
+
+            transaction.commit();
+
+            
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
             }
-
-            ResultSet rs = ps.executeQuery();
-
-            while (rs.next()) list.add(mapRowToDemande(rs));
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Error selecting demandes by statut", e);
+            throw e;
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw new RuntimeException("Error selecting demandes", e);
         }
-        return list;
+        return list.getResultList();
     }
 
     
@@ -102,30 +124,42 @@ public class DemandeRDVRepository implements DemandeRDVRepositoryImpl {
 
     public void updateStatut(int demandeId, Statut statut) {
         Objects.requireNonNull(statut, "Statut cannot be null");
-        String sql = "UPDATE demande_rdv SET statut = ?::statut_enum WHERE id = ?";
 
-        try (PreparedStatement ps = db.prepareStatement(sql)) {
+        EntityManager entityManager = ObjectFactory.getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
 
-            ps.setString(1, statut.name());
-            ps.setInt(2, demandeId);
+        String sql = "UPDATE DemandeRDV d SET d.statut = :statut WHERE d.id = :id";
 
-            ps.executeUpdate();
-        } catch (SQLException e) {
+        try {
+            transaction.begin();
+
+            entityManager.createQuery(sql).setParameter("statut", statut)
+                .setParameter("id", demandeId)
+                .executeUpdate();
+
+            transaction.commit();
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
             throw new RuntimeException("Error updating demande statut", e);
         }
     }
    
     
     public DemandeRDV findById(int demandeId) {
-        String sql = "SELECT id, description, created_at, patient_id, specialite, statut FROM demande_rdv WHERE id = ?";
-        try (PreparedStatement ps = db.prepareStatement(sql)) {
-            ps.setInt(1, demandeId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return mapRowToDemande(rs);
-        } catch (SQLException e) {
+
+        EntityManager entityManager = ObjectFactory.getEntityManager();
+        try {
+            return entityManager.find(DemandeRDV.class, demandeId);
+        } catch (Exception e) {
             throw new RuntimeException("Error finding demande by ID", e);
         }
-        return null;
     }
 
 
@@ -135,39 +169,36 @@ public class DemandeRDVRepository implements DemandeRDVRepositoryImpl {
 
 
     private List<DemandeRDV> findDemandesByCondition(String whereClause, Integer patientId) {
+
+        EntityManager entityManager = ObjectFactory.getEntityManager();
+        EntityTransaction transaction = entityManager.getTransaction();
+
         String sql = (whereClause == null || whereClause.isEmpty())
-            ? "SELECT id, description, created_at, patient_id, specialite, statut FROM demande_rdv ORDER BY created_at DESC"
-            : "SELECT id, description, created_at, patient_id, specialite, statut FROM demande_rdv " + whereClause + " ORDER BY created_at DESC";
+            ? "SELECT d FROM DemandeRDV d ORDER BY d.createdAt DESC"
+            : "SELECT d FROM DemandeRDV d " + whereClause + " ORDER BY d.createdAt DESC";
 
         List<DemandeRDV> list = new ArrayList<>();
-        try (PreparedStatement ps = db.prepareStatement(sql)) {
-            if (patientId != null) ps.setInt(1, patientId);
 
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) list.add(mapRowToDemande(rs));
-        } catch (SQLException e) {
+        try {
+            transaction.begin();
+
+            list = entityManager.createQuery(sql, DemandeRDV.class).setParameter("patientId", patientId).getResultList();
+
+            transaction.commit();
+
+            
+        } catch (RuntimeException e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
+            throw e;
+        } catch (Exception e) {
+            if (transaction.isActive()) {
+                transaction.rollback();
+            }
             throw new RuntimeException("Error selecting demandes", e);
         }
         return list;
     }
     
-
-    private DemandeRDV mapRowToDemande(ResultSet rs) throws SQLException {
-        DemandeRDV d = ObjectFactory.createDemandeRDV();
-        d.setId(rs.getInt("id"));
-        d.setDescription(rs.getString("description"));
-        Timestamp created = rs.getTimestamp("created_at");
-        d.setCreatedAt(created != null ? created.toLocalDateTime() : null);
-
-        if (d.getPatient() == null) {
-            d.setPatient(ObjectFactory.createPatient());
-        }
-
-        d.getPatient().setId(rs.getInt("patient_id"));
-        String spec = rs.getString("specialite");
-        d.setSpecialite(spec != null ? Specialite.valueOf(spec) : null);
-        String st = rs.getString("statut");
-        d.setStatut(st != null ? Statut.valueOf(st) : null);
-        return d;
-    }
 }

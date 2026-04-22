@@ -6,18 +6,59 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "patient")
 public class Patient {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id; //Generer automatiquement dans la base de donnees
+
+    @Column(name = "patient_code", nullable= false)
     private String patientCode; //Generer automatiquement dans le service
+
+    @Column(nullable = false)
     private String lastname; //Obligatoire lors de la creation d'un nouveau patient
+
+    @Column(nullable = false)
     private String firstname; //Obligatoire lors de la creation d'un nouveau patient
+    
     private String address; //Facultatif lors de la creation d'un nouveau patient
+
+    @Column(nullable = false)
     private String phone;  //Obligatoire lors de la creation d'un nouveau patient
+
+    @Column(name = "medical_history", columnDefinition = "jsonb")
+    @JdbcTypeCode(SqlTypes.JSON)
     private List<String> medicalHistory; //Facultatif lors de la creation d'un nouveau patient
+
+    @Column(nullable = false)
     private String email; //Obligatoire lors de la creation d'un nouveau patient
+
+    @Column(nullable = false)
     private String password; //Obligatoire lors de la creation d'un nouveau patient
+    
+    @Column(nullable = true)
     private LocalDate birthday; //Obligatoire lors de la creation d'un nouveau patient
+
+    @Column(name = "created_at", updatable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt; //Generer automatiquement dans le service || dans la base de donnees
+    
+    @OneToMany(mappedBy = "patient", fetch = FetchType.LAZY)
     private List<DemandeRDV> demandes;
 
     public Patient(
